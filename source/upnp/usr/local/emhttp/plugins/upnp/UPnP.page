@@ -43,6 +43,7 @@ input.ok{color:#f2f2f2;background:#4f8a10}
 input.nok{color:#f2f2f2;background:#f0000c}
 i.fa-fw{margin-left:5px}
 i.key-off{opacity:0.3;cursor:default!important}
+div.respond-type code{font-size:1.5rem}
 </style>
 <script src="<?autov('/webGui/javascript/jquery.switchbutton.js')?>"></script>
 <script>
