@@ -254,7 +254,9 @@ if (!file_exists('/usr/bin/upnpc')) {
 $link = file_exists('/sys/class/net/br0') ? 'br0' : (file_exists('/sys/class/net/bond0') ? 'bond0' : 'eth0');
 
 // determine whether UPnP is enabled in the router
-list ($xml, $debugOutput, $output) = getXML($link);
+$debugOutput = "_Note: when pasting these results into the forum, `right click -> paste as plain text`_\n\n";
+list ($xml, $debugOutputX, $output) = getXML($link);
+$debugOutput .= $debugOutputX;
 if (!$xml) {
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
   exit;
