@@ -1,0 +1,152 @@
+Menu="Utilities"
+Title="Universal Plug and Play (UPnP)"
+Icon="icon-ftp"
+Tag="globe"
+---
+<?PHP
+/* Copyright 2019, ljm42
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+?>
+<?
+?>
+<link type="text/css" rel="stylesheet" href="<?autov('/webGui/styles/jquery.switchbutton.css')?>">
+<style>
+/* TODO: do we need all these styles? */
+@media(max-width:1680px){dt{width:25%}}
+span.even{float:right;display:inline-block;width:140px}
+span.pin{float:right;margin:-28px 12px 0 0;clear:both}
+span.pin.next{margin-top:-48px}
+span[class^=tx]{margin-right:40px}
+span.hshift{margin-right:<?=$themes1?'-7':'11'?>px!important}
+span.vshift{margin-top:<?=$themes1?'-2':'-4'?>px!important}
+span.input{display:inline-block;width:420px}
+div.shade-white{background-color:#ededed;margin-top:10px;padding:8px 0 3px 0}
+div.shade-black{background-color:#212121;margin-top:10px;padding:8px 0 3px 0}
+div.shade-azure{background-color:#edeaef;margin-top:10px;padding:8px 0 3px 0}
+div.shade-gray{background-color:#121510;margin-top:10px;padding:8px 0 3px 0}
+div[id=title]{margin-bottom:10px!important}
+div[id^=block-wg]{margin-bottom:30px}
+input.wide{width:360px}
+input.subnet{width:150px;margin-right:4px}
+input.mask{width:30px}
+input.port{width:50px}
+input.form,button.form{font-size:1rem;padding:5px 10px;margin:0 12px 0 0}
+input.form,button.form i{margin:0}
+input.ok{color:#f2f2f2;background:#4f8a10}
+input.nok{color:#f2f2f2;background:#f0000c}
+i.fa-fw{margin-left:5px}
+i.key-off{opacity:0.3;cursor:default!important}
+</style>
+<script src="<?autov('/webGui/javascript/jquery.switchbutton.js')?>"></script>
+<script>
+var EXECURL = '/plugins/upnp/include/exec.php';
+var RespondType = '';
+function updateData(previousDebug) {
+  $('div.respond-type').hide();
+  $('div.spinner').show();
+  $.post(EXECURL,{task:'update'},function(keys){
+    $('div.spinner').hide();
+    console.log(keys);
+    var key = keys.split('\0');
+    $('#RespondDebug').html((previousDebug ? previousDebug : "")+key[0]);
+    RespondType = key[2];
+    if (RespondType == "RespondUpnp"){
+      $('#localIP').html(key[3]);
+      $('#publicIP').html(key[4]);
+      $('#routerIP').html(key[5]);
+      // $('#routerXML').html(key[6]);
+      $('#upnp_head').html(key[7]);
+      $('#upnp_body').html(key[8]);
+      // timers.updateData = setTimeout(updateData,10000);
+    }
+    // does not toggle the value of the switch, just shows/hides the appropriate divs
+    $('#toggle-debug').trigger('change');
+  });
+}
+function deleteUpnp(exPort,proto,remoteHost) {
+  swal({title:"Delete UPnP port forward?",text:"External Port "+exPort+"/"+proto,type:"warning",showCancelButton:true},function(){
+    $.post(EXECURL,{proto:proto,exPort:exPort,remoteHost:remoteHost,task:'delete'},function(keys){
+      var key = keys.split('\0');
+      updateData(key[0]+"\n");
+    });
+  });
+}
+$(function() {
+  // unraid animated logo
+  var unraid_logo = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 133.52 76.97" class="unraid_mark"><defs><linearGradient id="unraid_logo" x1="23.76" y1="81.49" x2="109.76" y2="-4.51" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e32929"/><stop offset="1" stop-color="#ff8d30"/></linearGradient></defs><path d="m70,19.24zm57,0l6.54,0l0,38.49l-6.54,0l0,-38.49z" fill="url(#unraid_logo)" class="unraid_mark_9"/><path d="m70,19.24zm47.65,11.9l-6.55,0l0,-23.79l6.55,0l0,23.79z" fill="url(#unraid_logo)" class="unraid_mark_8"/><path d="m70,19.24zm31.77,-4.54l-6.54,0l0,-14.7l6.54,0l0,14.7z" fill="url(#unraid_logo)" class="unraid_mark_7"/><path d="m70,19.24zm15.9,11.9l-6.54,0l0,-23.79l6.54,0l0,23.79z" fill="url(#unraid_logo)" class="unraid_mark_6"/><path d="m63.49,19.24l6.51,0l0,38.49l-6.51,0l0,-38.49z" fill="url(#unraid_logo)" class="unraid_mark_5"/><path d="m70,19.24zm-22.38,26.6l6.54,0l0,23.78l-6.54,0l0,-23.78z" fill="url(#unraid_logo)" class="unraid_mark_4"/><path d="m70,19.24zm-38.26,43.03l6.55,0l0,14.73l-6.55,0l0,-14.73z" fill="url(#unraid_logo)" class="unraid_mark_3"/><path d="m70,19.24zm-54.13,26.6l6.54,0l0,23.78l-6.54,0l0,-23.78z" fill="url(#unraid_logo)" class="unraid_mark_2"/><path d="m70,19.24zm-63.46,38.49l-6.54,0l0,-38.49l6.54,0l0,38.49z" fill="url(#unraid_logo)" class="unraid_mark_1"/></svg>';
+  $('div.spinner').html(unraid_logo).show();
+  if ( typeof caPluginUpdateCheck === "function" ) {
+    caPluginUpdateCheck("upnp.plg");
+  }
+  $('#toggle-debug').switchButton({labels_placement:'left',off_label:'Normal',on_label:'Debug',checked:false});
+  $('#toggle-debug').change(function(){
+    // TODO: update jquery switchbutton so can disable button 
+    // https://github.com/olance/jQuery-switchButton/commit/0e847d2064c3d8e134cc1d22d579a1bc91ddedee
+    $('div.respond-type').hide();
+    if ($('#toggle-debug').is(':checked')) {
+      $('#RespondDebug').show();
+    } else {
+      $('#'+RespondType).show();
+    }
+  });
+  $(updateData());
+});
+</script>
+
+<div>
+<span class="pin"><i class="fa fa-fw fa-refresh" style="cursor:pointer" onclick="updateData();" title="Refresh Data"></i></span>
+<span class='even'><span class='status vhshift'><input type='checkbox' id='toggle-debug'></span></span>
+</div>
+
+<div class="spinner"></div>
+
+<div id="RespondNotInstalled" markdown="1" class="respond-type" style="display:none">
+UPnP is not installed on Unraid, although it may still be enabled on the router.
+</div>
+
+<div id="RespondDisabled" markdown="1" class="respond-type" style="display:none">
+UPnP is disabled on the router. This is the most secure option.
+</div>
+
+<div id="RespondUpnp" markdown="1" class="respond-type" style="display:none">
+Public IP:
+: <span class='big' id="publicIP">&nbsp;</span>
+
+> This is the router's WAN IP address (this network's public, external IP address)
+
+Router IP:
+: <span class='big' id="routerIP">&nbsp;</span>
+
+> This is the router's LAN IP address
+
+Local IP:
+: <span class='big' id="localIP">&nbsp;</span>
+
+> This is Unraid's LAN IP address as detected by the UPnP service on the router
+
+<table class="share_status">
+<thead id="upnp_head"></thead>
+<tbody id="upnp_body"></tbody>
+</table>
+</div>
+
+<div id="RespondDebug" class="respond-type" style="display:none">
+</div>
+
+> ### Overview
+>
+> The goal of this plugin is to give you visibility into the UPnP activity on your network.
+> 
+> Universal Plug and Play (UPnP) is a convenience feature available on some routers that allows network devices
+> to easily setup port forwarding. It is widely regarded as a security risk because no authentication
+> is required, any device on the network can open a port to itself.
+> 
+> There have been multiple security issues with UPnP over the years, if it is enabled on your router 
+> be sure the router is running the latest available firmware.
