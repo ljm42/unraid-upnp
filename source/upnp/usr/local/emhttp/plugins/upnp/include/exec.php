@@ -38,16 +38,16 @@ function print_row($data) {
   $print_row_output .= "</td></tr>\n";
 }
 
-function getXML() {
-  global $link, $timeout;
+function getXML($link) {
+  global $timeout;
   $output = $url = $err = "";
   $debugOutput = "## getXML\n";
 
-  $fileXML='/usr/local/emhttp/plugins/upnp/upnpXML';
-  $xml = trim(@file_get_contents($fileXML));
+  $upnp='/usr/local/emhttp/plugins/upnp/upnpXML';
+  $xml = @file_get_contents($upnp);
   if ($xml) {
     // confirm the xml still works
-    $cmd1="timeout $timeout upnpc $xml $link -l 2>&1";
+    $cmd1="timeout $timeout upnpc -u $xml -m $link -l 2>&1";
     exec($cmd1, $results1, $status1);
     $debugOutput .= "#### Command\n    $cmd1\n#### Status\n    $status1\n";
     if ($status1 == 124) {
@@ -56,7 +56,7 @@ function getXML() {
       $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available at previous XML [$xml].\n";
     } else {
       $debugOutput .= "#### Results\n    ".implode("\n    ",$results1)."\n#### Determination\n";
-      preg_match('#-u (http://.*/).*#',$xml,$matches);
+      preg_match('#(http://.*/).*#',$xml,$matches);
       $urlbase = $matches[1];
       $debugOutput .= "    ->urlbase is [$urlbase]\n\n";
       $resCheck1 = array_values(preg_grep("#Found valid IGD : {$urlbase}#", $results1));
@@ -98,20 +98,18 @@ function getXML() {
       }
     }
   } else {
-    $url = substr($xml, 3);
+    $url = $xml;
   }
   if (!$url) {
     // remove the xml file, if it exists
-    @unlink($fileXML);
+    @unlink($upnp);
     $xml = '';
-  } else if ($url != substr($xml,3)) {
+  } else if ($url != $xml) {
     // new url found, and does not match previous xml. write to file.
-    $xml = '-u '.$url;
-    $fp = fopen($fileXML, 'w');
-    fwrite($fp, $xml);
-    fclose($fp);
+    $xml = $url;
+    file_put_contents($upnp,$xml);
   } else {
-    // previous xml and xml file are still valid
+    // previous xml still valid
   }
   if ($xml) {
     $debugOutput .= "    ->The Router's IDG XML URL is [$xml]\n***\n";
@@ -122,12 +120,12 @@ function getXML() {
   return array($xml, $debugOutput, $output);
 }
 
-function getUpnpcL($xml) {
-  global $link, $timeout, $print_row_output, $localIP;
+function getUpnpcL($xml, $link) {
+  global $timeout, $print_row_output, $localIP;
   $output = $publicIP = $routerIP = "";
   $debugOutput = "## parse UPNPC -L data\n";
 
-  $cmd3 = "timeout $timeout upnpc $xml $link -l 2>/dev/null";
+  $cmd3 = "timeout $timeout upnpc -u $xml -m $link -l 2>/dev/null";
   exec($cmd3, $results3, $status3);
   $debugOutput .= "#### Command\n    $cmd3\n#### Status\n    $status3\n";
 
@@ -139,7 +137,7 @@ function getUpnpcL($xml) {
   } else {
     $debugOutput .= "#### Results\n    ".implode("\n    ",$results3)."\n#### Determination\n";
 
-    $routerIP = preg_replace('#\-u http://(.*):.*#i', '${1}', $xml);
+    $routerIP = preg_replace('#http://(.*):.*#i', '${1}', $xml);
     $debugOutput .= "    $xml\n    ->router IP is [$routerIP]\n";
 
     $resCheck3A = array_values(preg_grep("/ExternalIPAddress = /", $results3));
@@ -181,8 +179,7 @@ function getUpnpcL($xml) {
   return array($debugOutput, $output);
 }
 
-function deleteEntry($xml) {
-  global $link;
+function deleteEntry($xml, $link) {
   $output = $proto = $exPort = $remoteHost = "";
   $debugOutput = "## deleteEntry\n";
 
@@ -194,7 +191,7 @@ function deleteEntry($xml) {
 
   if ($proto && $exPort) {
     // TODO: include remoteHost in the upnpc call, if it exists
-    $cmd5 = "upnpc $xml $link -d $exPort $proto";
+    $cmd5 = "upnpc -u $xml -m $link -d $exPort $proto";
     exec($cmd5, $results5, $status5);
     $debugOutput .= "#### Command\n    $cmd5\n#### Status\n    $status5\n";
     $debugOutput .= "#### Results\n    ".implode("\n    ",$results5)."\n#### Determination\n";
@@ -237,7 +234,6 @@ function deleteEntry($xml) {
 
 // ****************
 // setup global vars
-$link = "-m ".(file_exists('/sys/class/net/br0') ? 'br0' : (file_exists('/sys/class/net/bond0') ? 'bond0' : 'eth0'));
 $timeout=6;
 $localIP = "";
 $print_row_output = "";
@@ -255,8 +251,10 @@ if (!file_exists('/usr/bin/upnpc')) {
   exit;
 }
 
+$link = file_exists('/sys/class/net/br0') ? 'br0' : (file_exists('/sys/class/net/bond0') ? 'bond0' : 'eth0');
+
 // determine whether UPnP is enabled in the router
-list ($xml, $debugOutput, $output) = getXML();
+list ($xml, $debugOutput, $output) = getXML($link);
 if (!$xml) {
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
   exit;
@@ -265,12 +263,12 @@ if (!$xml) {
 $task = $_POST['task'];
 switch ($task) {
 case 'delete':
-  list ($debugOutputD, $output) = deleteEntry($xml);
+  list ($debugOutputD, $output) = deleteEntry($xml, $link);
   $debugOutput .= $debugOutputD;
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
   break;
 default:
-  list ($debugOutputL, $output) = getUpnpcL($xml);
+  list ($debugOutputL, $output) = getUpnpcL($xml, $link);
   $debugOutput .= $debugOutputL;
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
 }
