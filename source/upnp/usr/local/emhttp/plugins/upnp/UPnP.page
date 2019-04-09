@@ -109,11 +109,11 @@ $(function() {
 <div class="spinner"></div>
 
 <div id="RespondNotInstalled" markdown="1" class="respond-type" style="display:none">
-UPnP is not installed on Unraid, although it may still be enabled on the router.
+The UPnP client is not installed on Unraid, unable to confirm whether the UPnP server is running on the router.
 </div>
 
 <div id="RespondDisabled" markdown="1" class="respond-type" style="display:none">
-UPnP is disabled on the router. This is the most secure option.
+The UPnP server appears to be disabled on the router. This is the most secure option.
 </div>
 
 <div id="RespondUpnp" markdown="1" class="respond-type" style="display:none">

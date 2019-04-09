@@ -244,13 +244,9 @@ extract(parse_ini_file('/var/local/emhttp/network.ini',true));
 $link = file_exists('/sys/class/net/br0') ? 'br0' : (file_exists('/sys/class/net/bond0') ? 'bond0' : 'eth0');
 
 // to prevent Unraid from using upnpc at all, a user can delete or rename the upnpc executable in their go script
-if (!file_exists('/usr/bin/upnpc')) {
-  $unraid = parse_ini_file('/etc/unraid-version');
-  $minver = "6.7.0-rc1"; // TODO: verify minimum version
-  $debugOutput = "## upnpc not installed\n";
-  $debugOutput .= "    Minimum Unraid version: [$minver]\n    Your Unraid version: [".$unraid['version']."]\n";
-  $debugOutput .= "    ->Your version is ".(version_compare($minver, $unraid['version'], '<') ? "" : "not ")."sufficient.\n\n";
-  $debugOutput .= "    ->/usr/bin/upnpc does not exist, unable to use UPnP\n";
+if (!is_executable('/usr/bin/upnpc')) {
+  $debugOutput = "## UPnP client not installed on Unraid\n";
+  $debugOutput .= "    ->/usr/bin/upnpc is not executable or does not exist, unable to access UPnP from Unraid\n";
   $output = "RespondNotInstalled";
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
   exit;
