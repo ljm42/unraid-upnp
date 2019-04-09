@@ -20,8 +20,9 @@ function parse_row($data) {
   $final = array($arr[1], $matches[1], $matches[2], $matches[3], $arr[3], $arr[4], $arr[5]);
   return($final);	
 }
-function print_row($data) {
+function print_row($dataUnsafe) {
   global $print_row_output, $localIP;
+  $data = array_map('htmlspecialchars', $dataUnsafe);
   $print_row_output .= "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td><td>$data[6]</td><td style='width:8%;text-align:center'>";
   if ($data[7]) {
     // display the delete header
@@ -36,6 +37,12 @@ function print_row($data) {
     }
   }
   $print_row_output .= "</td></tr>\n";
+}
+function output_results($results) {
+  $output = htmlspecialchars(implode("\n    ",$results));
+  // display "->" normally, wil not cause XSS
+  $output = preg_replace("/-&gt;/", "->", $output);
+  return $output;
 }
 
 function getXML($link, $eth0) {
@@ -55,11 +62,11 @@ function getXML($link, $eth0) {
       $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available at previous XML [$xml]\n";
       $xml = "";
     } else {
-      $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
+      $debugOutput .= "#### Results\n    ".output_results($results)."\n#### Determination\n";
       $addr = $eth0['IPADDR:0'];
       $resCheck = array_values(preg_grep("/Local LAN ip address : $addr/", $results));
       if (count($resCheck) > 0) {
-        $debugOutput .= "    $resCheck[0]\n    ->Expected LAN ip detected [$addr]\n    ->[$xml] is valid\n";
+        $debugOutput .= "    ".htmlspecialchars($resCheck[0])."\n    ->Expected LAN ip detected [$addr]\n    ->[$xml] is valid\n";
       } else {
         $debugOutput .= "    ->UPnP not available at previous XML [$xml]\n";
         $xml = "";
@@ -76,14 +83,14 @@ function getXML($link, $eth0) {
       // the timeout was triggered, UPnP disabled.  url not set
       $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available.\n";
     } else {
-      $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
+      $debugOutput .= "#### Results\n    ".output_results($results)."\n#### Determination\n";
       $gateway = $eth0['GATEWAY:0'];
       $debugOutput .= "\n    ->gateway is [$gateway]\n\n";
       $resCheck = array_values(preg_grep("/ desc:.*{$gateway}:/", $results));
       if (count($resCheck) > 0) {
         // a connection to the gateway was found
         $url = str_replace(" desc: ", "", $resCheck[0]);
-        $debugOutput .= "    $resCheck[0]\n    ->Url is [$url]\n";
+        $debugOutput .= "    ".htmlspecialchars($resCheck[0])."\n    ->Url is [$url]\n";
       } else {
         // no UPnP device found.  url not set
         $debugOutput .= "    ->No IGD device found\n";
@@ -116,7 +123,7 @@ function getUpnpcL($xml, $link, $eth0, $results) {
   global $print_row_output, $localIP;
   $output = $publicIP = $routerIP = "";
   $debugOutput = "## parse UPNPC -L data\n";
-  $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
+  $debugOutput .= "#### Results\n    ".output_results($results)."\n#### Determination\n";
 
   $gateway = $eth0['GATEWAY:0'];
   $routerIP = preg_replace('#http://(.*):.*#i', '${1}', $xml);
@@ -129,7 +136,7 @@ function getUpnpcL($xml, $link, $eth0, $results) {
   $resCheck = array_values(preg_grep("/ExternalIPAddress = /", $results));
   if (count($resCheck) > 0) {
     $publicIP = str_replace("ExternalIPAddress = ","",$resCheck[0]);
-    $debugOutput .= "\n    $resCheck[0]\n    ->public IP is [$publicIP]\n";
+    $debugOutput .= "\n    ".htmlspecialchars($resCheck[0])."\n    ->public IP is [$publicIP]\n";
   } else {
     $debugOutput .= "    ->No public IP found\n";
   }
@@ -139,16 +146,16 @@ function getUpnpcL($xml, $link, $eth0, $results) {
   if (count($resCheck) > 0) {
     $localIP = str_replace("Local LAN ip address : ","",$resCheck[0]);
     if ($localIP === $addr) {
-      $debugOutput .= "\n    $resCheck[0]\n    ->local IP is [$localIP], as expected\n";
+      $debugOutput .= "\n    ".htmlspecialchars($resCheck[0])."\n    ->local IP is [$localIP], as expected\n";
     } else {
-      $debugOutput .= "\n    $resCheck[0]\n    ->Strange... local IP detected as [$localIP], should be [$addr]\n";
+      $debugOutput .= "\n    ".htmlspecialchars($resCheck[0])."\n    ->Strange... local IP detected as [$localIP], should be [$addr]\n";
     }
   } else {
     $debugOutput .= "    ->No local IP found\n";
   }
 
   $resCheck = array_values(preg_grep("/ ?\d+ (TCP|UDP) /", $results));
-  $debugOutput .= "\n    ->Port forwards listed below\n    ".implode("\n    ",$resCheck)."\n";
+  $debugOutput .= "\n    ->Port forwards listed below\n    ".output_results($resCheck)."\n";
   $resCheck = array_filter(array_map('parse_row', $resCheck));
 
   $header = array("Protocol","External Port","Internal IP","Internal Port","Description","Remote Host","Lease Time","Delete");
@@ -184,13 +191,13 @@ function deleteEntry($xml, $link) {
     $cmd = "upnpc -u $xml -m $link -d $exPort $proto";
     exec($cmd, $results, $status);
     $debugOutput .= "#### Command\n    $cmd\n#### Status\n    $status\n";
-    $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
+    $debugOutput .= "#### Results\n    ".output_results($results)."\n#### Determination\n";
 
     $resCheck = array_values(preg_grep("/UPNP_DeletePortMapping()/", $results));
     if (count($resCheck) > 0) {
       if (preg_match('/UPNP_DeletePortMapping\(\).*: (\d+)/',$resCheck[0],$matches)) {
         $delPortRetCode = $matches[1];
-        $debugOutput .= "\n    $resCheck[0]\n    ->return code is [$delPortRetCode]\n";
+        $debugOutput .= "\n    ".htmlspecialchars($resCheck[0])."\n    ->return code is [$delPortRetCode]\n";
         // return codes defined here: https://github.com/miniupnp/miniupnp/blob/master/miniupnpc/upnpcommands.h
         switch ($delPortRetCode) {
           case 0:
