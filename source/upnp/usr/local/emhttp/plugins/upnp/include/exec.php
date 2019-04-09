@@ -47,19 +47,19 @@ function getXML($link, $eth0) {
   $xml = trim(@file_get_contents($upnp));
   if ($xml) {
     // confirm the xml still works
-    $cmd1="timeout $timeout upnpc -u $xml -m $link -l 2>&1";
-    exec($cmd1, $results1, $status1);
-    $debugOutput .= "#### Command\n    $cmd1\n#### Status\n    $status1\n";
-    if ($status1 == 124) {
+    $cmd="timeout $timeout upnpc -u $xml -m $link -l 2>&1";
+    exec($cmd, $results, $status);
+    $debugOutput .= "#### Command\n    $cmd\n#### Status\n    $status\n";
+    if ($status == 124) {
       // the timeout was triggered, likely UPnP was disabled after xml file created
       $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available at previous XML [$xml]\n";
       $xml = "";
     } else {
-      $debugOutput .= "#### Results\n    ".implode("\n    ",$results1)."\n#### Determination\n";
+      $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
       $addr = $eth0['IPADDR:0'];
-      $resCheck1 = array_values(preg_grep("/Local LAN ip address : $addr/", $results1));
-      if (count($resCheck1) > 0) {
-        $debugOutput .= "    $resCheck1[0]\n    ->Expected LAN ip detected [$addr]\n    ->[$xml] is valid\n";
+      $resCheck = array_values(preg_grep("/Local LAN ip address : $addr/", $results));
+      if (count($resCheck) > 0) {
+        $debugOutput .= "    $resCheck[0]\n    ->Expected LAN ip detected [$addr]\n    ->[$xml] is valid\n";
       } else {
         $debugOutput .= "    ->UPnP not available at previous XML [$xml]\n";
         $xml = "";
@@ -69,21 +69,21 @@ function getXML($link, $eth0) {
   if (!$xml) {
     $debugOutput .= "***\n";
     // if no xml, or if there was an error, issue call again
-    $cmd2 = "timeout ".(2*$timeout)." upnpc -m $link -l 2>&1";
-    exec($cmd2, $results2, $status2);
-    $debugOutput .= "#### Command\n    $cmd2\n#### Status\n    $status2\n";
-    if ($status2 == 124) {
+    $cmd = "timeout ".(2*$timeout)." upnpc -m $link -l 2>&1";
+    exec($cmd, $results, $status);
+    $debugOutput .= "#### Command\n    $cmd\n#### Status\n    $status\n";
+    if ($status == 124) {
       // the timeout was triggered, UPnP disabled.  url not set
       $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available.\n";
     } else {
-      $debugOutput .= "#### Results\n    ".implode("\n    ",$results2)."\n#### Determination\n";
+      $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
       $gateway = $eth0['GATEWAY:0'];
       $debugOutput .= "\n    ->gateway is [$gateway]\n\n";
-      $resCheck2A = array_values(preg_grep("/ desc:.*{$gateway}:/", $results2));
-      if (count($resCheck2A) > 0) {
+      $resCheck = array_values(preg_grep("/ desc:.*{$gateway}:/", $results));
+      if (count($resCheck) > 0) {
         // a connection to the gateway was found
-        $url = str_replace(" desc: ", "", $resCheck2A[0]);
-        $debugOutput .= "    $resCheck2A[0]\n    ->Url is [$url]\n";
+        $url = str_replace(" desc: ", "", $resCheck[0]);
+        $debugOutput .= "    $resCheck[0]\n    ->Url is [$url]\n";
       } else {
         // no UPnP device found.  url not set
         $debugOutput .= "    ->No IGD device found\n";
@@ -109,72 +109,60 @@ function getXML($link, $eth0) {
     $debugOutput .= "    ->UPnP not available on this network.\n***\n";
     $output = "RespondDisabled";
   }
-  return array($xml, $debugOutput, $output);
+  return array($xml, $debugOutput, $output, $results);
 }
 
-function getUpnpcL($xml, $link, $eth0) {
-  global $timeout, $print_row_output, $localIP;
+function getUpnpcL($xml, $link, $eth0, $results) {
+  global $print_row_output, $localIP;
   $output = $publicIP = $routerIP = "";
   $debugOutput = "## parse UPNPC -L data\n";
+  $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
 
-  $cmd3 = "timeout $timeout upnpc -u $xml -m $link -l 2>&1";
-  exec($cmd3, $results3, $status3);
-  $debugOutput .= "#### Command\n    $cmd3\n#### Status\n    $status3\n";
-
-  if ($status3 == 124) {
-    // the timeout was triggered. This should not happen since we just got a valid xml
-    $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available.\n";
-    $output = "RespondDisabled";
-
+  $gateway = $eth0['GATEWAY:0'];
+  $routerIP = preg_replace('#http://(.*):.*#i', '${1}', $xml);
+  if ($routerIP === $gateway) {
+    $debugOutput .= "    $xml\n    ->router IP is [$routerIP], as expected\n";
   } else {
-    $debugOutput .= "#### Results\n    ".implode("\n    ",$results3)."\n#### Determination\n";
+    $debugOutput .= "    $xml\n    ->Strange... router IP detected as [$routerIP], should be [$gateway]\n";
+  }
 
-    $gateway = $eth0['GATEWAY:0'];
-    $routerIP = preg_replace('#http://(.*):.*#i', '${1}', $xml);
-    if ($routerIP === $gateway) {
-      $debugOutput .= "    $xml\n    ->router IP is [$routerIP], as expected\n";
+  $resCheck = array_values(preg_grep("/ExternalIPAddress = /", $results));
+  if (count($resCheck) > 0) {
+    $publicIP = str_replace("ExternalIPAddress = ","",$resCheck[0]);
+    $debugOutput .= "\n    $resCheck[0]\n    ->public IP is [$publicIP]\n";
+  } else {
+    $debugOutput .= "    ->No public IP found\n";
+  }
+  
+  $addr = $eth0['IPADDR:0'];
+  $resCheck = array_values(preg_grep("/Local LAN ip address : /", $results));
+  if (count($resCheck) > 0) {
+    $localIP = str_replace("Local LAN ip address : ","",$resCheck[0]);
+    if ($localIP === $addr) {
+      $debugOutput .= "\n    $resCheck[0]\n    ->local IP is [$localIP], as expected\n";
     } else {
-      $debugOutput .= "    $xml\n    ->Strange... router IP detected as [$routerIP], should be [$gateway]\n";
+      $debugOutput .= "\n    $resCheck[0]\n    ->Strange... local IP detected as [$localIP], should be [$addr]\n";
     }
+  } else {
+    $debugOutput .= "    ->No local IP found\n";
+  }
 
-    $resCheck3A = array_values(preg_grep("/ExternalIPAddress = /", $results3));
-    if (count($resCheck3A) > 0) {
-      $publicIP = str_replace("ExternalIPAddress = ","",$resCheck3A[0]);
-      $debugOutput .= "\n    $resCheck3A[0]\n    ->public IP is [$publicIP]\n";
-    } else {
-      $debugOutput .= "    ->No public IP found\n";
-    }
-    
-    $addr = $eth0['IPADDR:0'];
-    $resCheck3B = array_values(preg_grep("/Local LAN ip address : /", $results3));
-    if (count($resCheck3B) > 0) {
-      $localIP = str_replace("Local LAN ip address : ","",$resCheck3B[0]);
-      if ($localIP === $addr) {
-        $debugOutput .= "\n    $resCheck3B[0]\n    ->local IP is [$localIP], as expected\n";
-      } else {
-        $debugOutput .= "\n    $resCheck3B[0]\n    ->Strange... local IP detected as [$localIP], should be [$addr]\n";
-      }
-    } else {
-      $debugOutput .= "    ->No local IP found\n";
-    }
+  $resCheck = array_values(preg_grep("/ ?\d+ (TCP|UDP) /", $results));
+  $debugOutput .= "\n    ->Port forwards listed below\n    ".implode("\n    ",$resCheck)."\n";
+  $resCheck = array_filter(array_map('parse_row', $resCheck));
 
-    $resCheck3C = array_values(preg_grep("/ ?\d+ (TCP|UDP) /", $results3));
-    $debugOutput .= "\n    ->Port forwards listed below\n    ".implode("\n    ",$resCheck3C)."\n";
-    $resCheck3C = array_filter(array_map('parse_row', $resCheck3C));
-
-    $header = array("Protocol","External Port","Internal IP","Internal Port","Description","Remote Host","Lease Time","Delete");
-    $output = "RespondUpnp"."\0".$localIP."\0".$publicIP."\0".$routerIP."\0".substr($xml,3)."\0";
-    $print_row_output = "";
-    print_row($header);
+  $header = array("Protocol","External Port","Internal IP","Internal Port","Description","Remote Host","Lease Time","Delete");
+  $output = "RespondUpnp"."\0".$localIP."\0".$publicIP."\0".$routerIP."\0".$xml."\0";
+  $print_row_output = "";
+  print_row($header);
+  $output .= $print_row_output."\0";
+  $print_row_output = "";
+  if (count($resCheck) > 0) {
+    array_walk($resCheck, 'print_row');
     $output .= $print_row_output."\0";
-    $print_row_output = "";
-    if (count($resCheck3C) > 0) {
-      array_walk($resCheck3C, 'print_row');
-      $output .= $print_row_output."\0";
-    } else {
-      $output .= "<tr><td colspan='8'>UPnP is enabled on the router, but there are currently no UPnP port forwards setup there.</td></tr>";
-      $debugOutput .= "\n    ->No UPnP port forwards are setup\n";
-    }
+  } else {
+    $output .= "<tr><td colspan='8'>UPnP is enabled on the router, but there are currently no UPnP port forwards setup there.</td></tr>";
+    $debugOutput .= "\n    ->No UPnP port forwards are setup\n";
   }
   $debugOutput .= "***\n";
 
@@ -193,16 +181,16 @@ function deleteEntry($xml, $link) {
 
   if ($proto && $exPort) {
     // TODO: include remoteHost in the upnpc call, if it exists
-    $cmd5 = "upnpc -u $xml -m $link -d $exPort $proto";
-    exec($cmd5, $results5, $status5);
-    $debugOutput .= "#### Command\n    $cmd5\n#### Status\n    $status5\n";
-    $debugOutput .= "#### Results\n    ".implode("\n    ",$results5)."\n#### Determination\n";
+    $cmd = "upnpc -u $xml -m $link -d $exPort $proto";
+    exec($cmd, $results, $status);
+    $debugOutput .= "#### Command\n    $cmd\n#### Status\n    $status\n";
+    $debugOutput .= "#### Results\n    ".implode("\n    ",$results)."\n#### Determination\n";
 
-    $resCheck5A = array_values(preg_grep("/UPNP_DeletePortMapping()/", $results5));
-    if (count($resCheck5A) > 0) {
-      if (preg_match('/UPNP_DeletePortMapping\(\).*: (\d+)/',$resCheck5A[0],$matches5A)) {
-        $delPortRetCode = $matches5A[1];
-        $debugOutput .= "\n    $resCheck5A[0]\n    ->return code is [$delPortRetCode]\n";
+    $resCheck = array_values(preg_grep("/UPNP_DeletePortMapping()/", $results));
+    if (count($resCheck) > 0) {
+      if (preg_match('/UPNP_DeletePortMapping\(\).*: (\d+)/',$resCheck[0],$matches)) {
+        $delPortRetCode = $matches[1];
+        $debugOutput .= "\n    $resCheck[0]\n    ->return code is [$delPortRetCode]\n";
         // return codes defined here: https://github.com/miniupnp/miniupnp/blob/master/miniupnpc/upnpcommands.h
         switch ($delPortRetCode) {
           case 0:
@@ -243,7 +231,7 @@ $print_row_output = "";
 extract(parse_ini_file('/var/local/emhttp/network.ini',true));
 $link = file_exists('/sys/class/net/br0') ? 'br0' : (file_exists('/sys/class/net/bond0') ? 'bond0' : 'eth0');
 
-// to prevent Unraid from using upnpc at all, a user can delete or rename the upnpc executable in their go script
+// to prevent Unraid from using upnpc at all, a user can remove the execute bit from the upnpc binary (or delete it) using their go script
 if (!is_executable('/usr/bin/upnpc')) {
   $debugOutput = "## UPnP client not installed on Unraid\n";
   $debugOutput .= "    ->/usr/bin/upnpc is not executable or does not exist, unable to access UPnP from Unraid\n";
@@ -254,7 +242,7 @@ if (!is_executable('/usr/bin/upnpc')) {
 
 // determine whether UPnP is enabled in the router
 $debugOutput = "_Note: when pasting these results into the forum, `right click -> paste as plain text`_\n\n";
-list ($xml, $debugOutputX, $output) = getXML($link, $eth0);
+list ($xml, $debugOutputX, $output, $results) = getXML($link, $eth0);
 $debugOutput .= $debugOutputX;
 if (!$xml) {
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
@@ -269,7 +257,7 @@ case 'delete':
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
   break;
 default:
-  list ($debugOutputL, $output) = getUpnpcL($xml, $link, $eth0);
+  list ($debugOutputL, $output) = getUpnpcL($xml, $link, $eth0, $results);
   $debugOutput .= $debugOutputL;
   echo Markdown($debugOutput)."\0".$debugOutput."\0".$output;
 }
