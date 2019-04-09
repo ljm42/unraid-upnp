@@ -32,7 +32,7 @@ function print_row($data) {
     if ($localIP == $data[2]) {
       $print_row_output .= "<a href='#' onclick='deleteUpnp(\"$data[1]\",\"$data[0]\",\"$data[5]\");return false'><i class='fa fa-trash-o' title='Delete UPnP entry'></i></a>";
     } else {
-      $print_row_output .= "<a href='#' onclick='swal({title:\"Unable to delete\", text:\"Login to your router to delete this UPnP entry\"});return false'><i class='fa fa-minus-circle' title='Unable to delete UPnP entry'></i></a>";
+      $print_row_output .= "<a href='#' onclick='swal({title:\"Unable to delete\", text:\"Login to your router to delete this UPnP entry\"});return false'><i class='fa fa-external-link' title='Unable to delete UPnP entry'></i></a>";
     }
   }
   $print_row_output .= "</td></tr>\n";
