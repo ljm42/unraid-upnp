@@ -65,6 +65,8 @@ function updateData(previousDebug) {
       // $('#routerXML').html(key[6]);
       $('#upnp_head').html(key[7]);
       $('#upnp_body').html(key[8]);
+      var resort = [ [1,0] ];
+      $('#upnp_table').trigger( 'updateAll', [ resort ] );
       // timers.updateData = setTimeout(updateData,10000);
     }
     // does not toggle the value of the switch, just shows/hides the appropriate divs
@@ -95,6 +97,14 @@ $(function() {
       $('#RespondDebug').show();
     } else {
       $('#'+RespondType).show();
+    }
+  });
+  $('#upnp_table').tablesorter({
+    sortList: [[1,0]],
+    sortAppend: { 0: [[1,'a']], 2: [[3,'a']], 4: [[1,'a']], 5: [[1,'a']], 6: [[1,'a']] }, 
+    headers: {
+      2: {sorter:'text'}, // the 'ipAddress' option is not installed on Unraid
+      7: {sorter:false}
     }
   });
   $(updateData());
@@ -132,7 +142,7 @@ Local IP:
 
 > This is Unraid's LAN IP address as detected by the UPnP service on the router
 
-<table class="share_status">
+<table class="tablesorter share_status" id="upnp_table">
 <thead id="upnp_head"></thead>
 <tbody id="upnp_body"></tbody>
 </table>
