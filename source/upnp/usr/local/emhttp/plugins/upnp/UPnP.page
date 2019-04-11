@@ -1,5 +1,5 @@
 Menu="Utilities"
-Title="Universal Plug and Play (UPnP)"
+Title="UPnP Monitor"
 Icon="icon-ftp"
 Tag="globe"
 ---
@@ -118,15 +118,35 @@ $(function() {
 
 <div class="spinner"></div>
 
+> ### Overview
+>
+> The goal of this plugin is to give you visibility into the UPnP activity on your network.
+> 
+> Universal Plug and Play (UPnP) is a convenience feature available on some routers that allows network devices
+> to easily setup port forwarding. It is widely regarded as a security risk because no authentication
+> is required, any device on the network can open a port to itself.
+> 
+> There have been multiple security issues with UPnP over the years, if it is enabled on your router 
+> be sure the router is running the latest available firmware.
+
 <div id="RespondNotInstalled" markdown="1" class="respond-type" style="display:none">
-The UPnP client is not installed on Unraid, unable to confirm whether the UPnP server is running on the router.
+Unraid's UPnP client has been disabled. This was likely done after disabling UPnP on the router, as the client offers
+little value when UPnP is not running on the router. 
+
+To enable Unraid's UPnP client, visit the <a href="/Settings/ManagementAccess">management access page</a>.
 </div>
 
 <div id="RespondDisabled" markdown="1" class="respond-type" style="display:none">
-The UPnP server appears to be disabled on the router. This is the most secure option.
+The UPnP server appears to be disabled on the router. This is generally regarded as the best option from a security perspective.
+The downside is that you need to setup any port forwards in your router manually.
+
+You can optionally visit the <a href="/Settings/ManagementAccess">management access page</a> to disable Unraid's UPnP client as well, 
+as it offers little benefit when UPnP is disabled on the router.
 </div>
 
 <div id="RespondUpnp" markdown="1" class="respond-type" style="display:none">
+
+<div style="display:none">
 Public IP:
 : <span class='big' id="publicIP">&nbsp;</span>
 
@@ -141,6 +161,9 @@ Local IP:
 : <span class='big' id="localIP">&nbsp;</span>
 
 > This is Unraid's LAN IP address as detected by the UPnP service on the router
+</div>
+
+UPnP devices on the network have forwarded the following ports through the router:
 
 <table class="tablesorter share_status" id="upnp_table">
 <thead id="upnp_head"></thead>
@@ -151,13 +174,3 @@ Local IP:
 <div id="RespondDebug" class="respond-type" style="display:none">
 </div>
 
-> ### Overview
->
-> The goal of this plugin is to give you visibility into the UPnP activity on your network.
-> 
-> Universal Plug and Play (UPnP) is a convenience feature available on some routers that allows network devices
-> to easily setup port forwarding. It is widely regarded as a security risk because no authentication
-> is required, any device on the network can open a port to itself.
-> 
-> There have been multiple security issues with UPnP over the years, if it is enabled on your router 
-> be sure the router is running the latest available firmware.
