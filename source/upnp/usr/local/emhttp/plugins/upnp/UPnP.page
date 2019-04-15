@@ -1,6 +1,6 @@
 Menu="Utilities"
 Title="UPnP Monitor"
-Icon="icon-ftp"
+Icon="upnp.png"
 Tag="globe"
 ---
 <?PHP
