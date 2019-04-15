@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "upnp">
 <!ENTITY author    "ljm42">
-<!ENTITY version   "2019.04.14">
-<!ENTITY md5       "034622ee39d11a6d55ec97bf240e4dae">
+<!ENTITY version   "2019.04.14a">
+<!ENTITY md5       "0cce0cc76a6188828d9f6cd703cef9bc">
 <!ENTITY launch    "Settings/UPnP">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "ljm42/unraid-upnp">
