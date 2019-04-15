@@ -2,15 +2,15 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "upnp">
 <!ENTITY author    "ljm42">
-<!ENTITY version   "2019.04.14a">
-<!ENTITY md5       "0cce0cc76a6188828d9f6cd703cef9bc">
+<!ENTITY version   "2019.04.14b">
+<!ENTITY md5       "3d9ad9001ec7c2e1c8dd7538e7f50148">
 <!ENTITY launch    "Settings/UPnP">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "ljm42/unraid-upnp">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/master/plugins/&name;.plg">
 ]>
 
-<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" icon="icon-ftp">
+<PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;">
 
 <CHANGES>
 ###2019.04.14
