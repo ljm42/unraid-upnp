@@ -20,12 +20,14 @@ Tag="globe"
 <style>
 /* TODO: do we need all these styles? */
 @media(max-width:1680px){dt{width:25%}}
-span.even{float:right;display:inline-block;width:140px}
-span.pin{float:right;margin:-28px 12px 0 0;clear:both}
+span.even{float:right;display:inline-block;width:130px}
+span.even.wide{width:180px}
+span.pin{float:right;margin:-28px 12px 0 0;}
 span.pin.next{margin-top:-48px}
 span[class^=tx]{margin-right:40px}
 span.hshift{margin-right:<?=$themes1?'-7':'11'?>px!important}
-span.vshift{margin-top:<?=$themes1?'-2':'-4'?>px!important}
+span.vshift{margin-top:-2px!important}
+span.label{font-size:1.1rem;text-transform:uppercase;letter-spacing:1px;margin-left:<?=$themes1?'-12':'-4'?>px}
 span.input{display:inline-block;width:420px}
 div.shade-white{background-color:#ededed;margin-top:10px;padding:8px 0 3px 0}
 div.shade-black{background-color:#212121;margin-top:10px;padding:8px 0 3px 0}
@@ -88,7 +90,10 @@ $(function() {
   if ( typeof caPluginUpdateCheck === "function" ) {
     caPluginUpdateCheck("upnp.plg");
   }
-  $('#toggle-debug').switchButton({labels_placement:'left',off_label:'Normal',on_label:'Debug',checked:false});
+  var ctrl = "<span style='float:right;display:inline-block;'><span class='status vshift label'>Debug</span><span class='status vhshift'><input type='checkbox' id='toggle-debug'></span></span>";
+  ctrl += "<span style='float:right;display:inline-block;' class='vshift label hshift'><i class='fa fa-fw fa-refresh' style='cursor:pointer' onclick='updateData();' title='Refresh Data'></i></span>";
+  $('div[id=title]').eq(0).find('span.left').append(ctrl);
+  $('#toggle-debug').switchButton({labels_placement:'left',off_label:'Off',on_label:'On',checked:false,clear:false});
   $('#toggle-debug').change(function(){
     // TODO: update jquery switchbutton so can disable button 
     // https://github.com/olance/jQuery-switchButton/commit/0e847d2064c3d8e134cc1d22d579a1bc91ddedee
@@ -110,11 +115,6 @@ $(function() {
   $(updateData());
 });
 </script>
-
-<div>
-<span class="pin"><i class="fa fa-fw fa-refresh" style="cursor:pointer" onclick="updateData();" title="Refresh Data"></i></span>
-<span class='even'><span class='status vhshift'><input type='checkbox' id='toggle-debug'></span></span>
-</div>
 
 <div class="spinner"></div>
 
