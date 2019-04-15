@@ -25,7 +25,7 @@ span.even.wide{width:180px}
 span.pin{float:right;margin:-28px 12px 0 0;}
 span.pin.next{margin-top:-48px}
 span[class^=tx]{margin-right:40px}
-span.hshift{margin-right:<?=$themes1?'-7':'11'?>px!important}
+span.hshift{margin-right:11>px!important}
 span.vshift{margin-top:-2px!important}
 span.label{font-size:1.1rem;text-transform:uppercase;letter-spacing:1px;margin-left:<?=$themes1?'-12':'-4'?>px}
 span.input{display:inline-block;width:420px}
