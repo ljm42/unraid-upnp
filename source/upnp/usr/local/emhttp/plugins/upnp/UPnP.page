@@ -15,6 +15,8 @@ Tag="globe"
  */
 ?>
 <?
+$version = parse_ini_file("/etc/unraid-version");
+$hasUpnpSettings = version_compare($version['version'],"6.8.0-rc0d", ">=");
 ?>
 <link type="text/css" rel="stylesheet" href="<?autov('/webGui/styles/jquery.switchbutton.css')?>">
 <style>
@@ -133,15 +135,19 @@ $(function() {
 Unraid's UPnP client has been disabled. This was likely done after disabling UPnP on the router, as the client offers
 little value when UPnP is not running on the router. 
 
+<?if ($hasUpnpSettings):?>
 To enable Unraid's UPnP client, visit the <a href="/Settings/ManagementAccess">management access page</a>.
+<?endif;?>
 </div>
 
 <div id="RespondDisabled" markdown="1" class="respond-type" style="display:none">
 The UPnP server appears to be disabled on the router. This is generally regarded as the best option from a security perspective.
 The downside is that you need to setup any port forwards in your router manually.
 
+<?if ($hasUpnpSettings):?>
 You can optionally visit the <a href="/Settings/ManagementAccess">management access page</a> to disable Unraid's UPnP client as well, 
 as it offers little benefit when UPnP is disabled on the router.
+<?endif;?>
 </div>
 
 <div id="RespondUpnp" markdown="1" class="respond-type" style="display:none">
