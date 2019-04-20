@@ -50,7 +50,7 @@ function getXML($link, $eth0) {
   $output = $url = "";
   $debugOutput = "## getXML\n";
 
-  $upnp='/usr/local/emhttp/plugins/upnp/upnpXML';
+  $upnp='/usr/local/emhttp/plugins/upnp-monitor/upnpXML';
   $xml = trim(@file_get_contents($upnp));
   if ($xml) {
     // confirm the xml still works

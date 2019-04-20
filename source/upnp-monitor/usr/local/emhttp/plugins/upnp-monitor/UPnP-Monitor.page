@@ -1,6 +1,6 @@
 Menu="Utilities"
 Title="UPnP Monitor"
-Icon="upnp.png"
+Icon="upnp-monitor.png"
 Tag="globe"
 ---
 <?PHP
@@ -51,7 +51,7 @@ div.respond-type code{font-size:1.5rem}
 </style>
 <script src="<?autov('/webGui/javascript/jquery.switchbutton.js')?>"></script>
 <script>
-var EXECURL = '/plugins/upnp/include/exec.php';
+var EXECURL = '/plugins/upnp-monitor/include/exec.php';
 var RespondType = '';
 function updateData(previousDebug) {
   $('div.respond-type').hide();

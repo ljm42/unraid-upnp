@@ -1,3 +1,3 @@
 #!/bin/bash
-cd source/upnp
+cd source/upnp-monitor
 pkg_build.sh $1
