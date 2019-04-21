@@ -23,20 +23,20 @@ function parse_row($data) {
 function print_row($dataUnsafe) {
   global $print_row_output, $localIP;
   $data = array_map('htmlspecialchars', $dataUnsafe);
-  $print_row_output .= "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td><td>$data[6]</td><td style='width:8%;text-align:center'>";
+  $col6 = (!$data[6]) ? "infinite" : $data[6];
   if ($data[7]) {
-    // display the delete header
-    $print_row_output .= $data[7];
+    // display the header
+    $col7 = $data[7];
   } else {
     // calculate the contents of the delete field
     // you can only delete items if the internal address matches your local address
     if ($localIP == $data[2]) {
-      $print_row_output .= "<a href='#' onclick='deleteUpnp(\"$data[1]\",\"$data[0]\",\"$data[5]\");return false'><i class='fa fa-trash-o' title='Delete UPnP entry'></i></a>";
+      $col7 = "<a href='#' onclick='deleteUpnp(\"$data[1]\",\"$data[0]\",\"$data[5]\");return false'><i class='fa fa-trash-o' title='Delete UPnP entry'></i></a>";
     } else {
-      $print_row_output .= "<a href='#' onclick='swal({title:\"Unable to delete\", text:\"Login to your router to delete this UPnP entry\"});return false'><i class='fa fa-external-link' title='Unable to delete UPnP entry'></i></a>";
+      $col7 = "<a href='#' onclick='swal({title:\"Unable to delete\", text:\"Login to your router to delete this UPnP entry\"});return false'><i class='fa fa-external-link' title='Unable to delete UPnP entry'></i></a>";
     }
   }
-  $print_row_output .= "</td></tr>\n";
+  $print_row_output .= "<tr><td>$data[0]</td><td>$data[1]</td><td>$data[2]</td><td>$data[3]</td><td>$data[4]</td><td>$data[5]</td><td>$col6</td><td style='width:8%;text-align:center'>$col7</td></tr>\n";
 }
 function output_results($results) {
   $output = htmlspecialchars(implode("\n    ",$results));

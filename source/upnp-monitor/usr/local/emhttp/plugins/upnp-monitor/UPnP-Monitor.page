@@ -111,6 +111,7 @@ $(function() {
     sortAppend: { 0: [[1,'a']], 2: [[3,'a']], 4: [[1,'a']], 5: [[1,'a']], 6: [[1,'a']] }, 
     headers: {
       2: {sorter:'text'}, // the 'ipAddress' option is not installed on Unraid
+      6: {sorter: "digit", string: "max"},
       7: {sorter:false}
     }
   });
