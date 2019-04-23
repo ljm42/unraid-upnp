@@ -2,8 +2,8 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "upnp-monitor">
 <!ENTITY author    "ljm42">
-<!ENTITY version   "2019.04.20">
-<!ENTITY md5       "40e2250865970f8e509d61da0719ca49">
+<!ENTITY version   "2019.04.22">
+<!ENTITY md5       "126c8b867ace97d7e9ab90635cf03611">
 <!ENTITY launch    "Settings/UPnP-Monitor">
 <!ENTITY plugdir   "/usr/local/emhttp/plugins/&name;">
 <!ENTITY github    "ljm42/unraid-upnp">
@@ -13,7 +13,7 @@
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" pluginURL="&pluginURL;" min="6.6.4">
 
 <CHANGES>
-###2019.04.20
+###2019.04.22
 - Initial Release
 </CHANGES>
 

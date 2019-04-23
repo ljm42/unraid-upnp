@@ -54,7 +54,7 @@ function getXML($link, $eth0) {
   $xml = trim(@file_get_contents($upnp));
   if ($xml) {
     // confirm the xml still works
-    $cmd="timeout $timeout upnpc -u $xml -m $link -l 2>&1";
+    $cmd="timeout $timeout stdbuf -o0 upnpc -u $xml -m $link -l 2>&1";
     exec($cmd, $results, $status);
     $debugOutput .= "#### Command\n    $cmd\n#### Status\n    $status\n";
     if ($status == 124) {
@@ -76,24 +76,30 @@ function getXML($link, $eth0) {
   if (!$xml) {
     $debugOutput .= "***\n";
     // if no xml, or if there was an error, issue call again
-    $cmd = "timeout ".(2*$timeout)." upnpc -m $link -l 2>&1";
+    $cmd = "timeout ".(4*$timeout)." stdbuf -o0 upnpc -m $link -l 2>&1";
     exec($cmd, $results, $status);
     $debugOutput .= "#### Command\n    $cmd\n#### Status\n    $status\n";
-    if ($status == 124) {
-      // the timeout was triggered, UPnP disabled.  url not set
-      $debugOutput .= "#### Determination\n    ->Command timed out. UPnP not available.\n";
+    $debugOutput .= "#### Results\n    ".output_results($results)."\n#### Determination\n";
+    $gateway = $eth0['GATEWAY:0'];
+    $debugOutput .= "\n    ->gateway is [$gateway]\n\n";
+    $resCheck = array_values(preg_grep("/ desc:.*{$gateway}:/", $results));
+    if (count($resCheck) > 0) {
+      // a connection to the gateway was found
+      $url = str_replace(" desc: ", "", $resCheck[0]);
+      $debugOutput .= "    ".htmlspecialchars($resCheck[0])."\n    ->Url is [$url]\n";
     } else {
-      $debugOutput .= "#### Results\n    ".output_results($results)."\n#### Determination\n";
-      $gateway = $eth0['GATEWAY:0'];
-      $debugOutput .= "\n    ->gateway is [$gateway]\n\n";
-      $resCheck = array_values(preg_grep("/ desc:.*{$gateway}:/", $results));
-      if (count($resCheck) > 0) {
-        // a connection to the gateway was found
-        $url = str_replace(" desc: ", "", $resCheck[0]);
-        $debugOutput .= "    ".htmlspecialchars($resCheck[0])."\n    ->Url is [$url]\n";
+      // no UPnP device found.  url not set
+      $debugOutput .= "    ->No IGD device found\n";
+    }
+
+    if ($status == 124) {
+      if ($url) {
+        // the timeout was triggered, but a url was found
+        $results = "";
+        $debugOutput .= "\n    ->The command timed out, but we still found a url. Trying again for details.\n";
       } else {
-        // no UPnP device found.  url not set
-        $debugOutput .= "    ->No IGD device found\n";
+        // the timeout was triggered, but url not found. UPnP is disabled.
+        $debugOutput .= "\n    ->Command timed out. UPnP not available.\n";        
       }
     }
   } else {
@@ -110,7 +116,11 @@ function getXML($link, $eth0) {
   } else {
     // previous xml still valid
   }
-  if ($xml) {
+  if ($xml && !$results) {
+    // the timeout was triggered, but a url was found and stored in $upnp file. Make the call again to get proper results.
+    list ($xml1, $debugOutputX, $output1, $results) = getXML($link, $eth0);
+    $debugOutput .= $debugOutputX;
+  } elseif ($xml) {
     $debugOutput .= "    ->The Router's IDG XML URL is [$xml]\n***\n";
   } else {
     $debugOutput .= "    ->UPnP not available on this network.\n***\n";
@@ -231,7 +241,7 @@ function deleteEntry($xml, $link) {
 
 // ****************
 // setup global vars
-$timeout=6;
+$timeout=3;
 $localIP = "";
 $print_row_output = "";
 
