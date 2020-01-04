@@ -14,6 +14,7 @@ $docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
 require_once "$docroot/webGui/include/Markdown.php";
 
 function parse_row($data) {
+  $data = preg_replace('/   ?/', ' ', $data); // replace 2 or 3 spaces with a single space
   $arr = str_getcsv(ltrim($data), " ", "'");
   if (count($arr) < 6) return null;
   preg_match('/(.*)->(.*):(.*)/', $arr[2], $matches);
